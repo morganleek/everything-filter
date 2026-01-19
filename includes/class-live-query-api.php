@@ -145,6 +145,9 @@ class Project_Filters_API {
             }
         }
 
+        // Override any arg
+        $args = apply_filters( 'live-query-' . $post_type . '-args', $args );
+
         // Execute query
         $query = new WP_Query($args);
         $projects = array();
