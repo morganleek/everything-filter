@@ -212,5 +212,36 @@ return array(
 		'editorStyle' => 'file:./index.css',
 		'style' => 'file:./style-index.css',
 		'viewScript' => 'file:./view.js'
+	),
+	'live-wrapper' => array(
+		'$schema' => 'https://schemas.wp.org/trunk/block.json',
+		'apiVersion' => 3,
+		'name' => 'scm/live-wrapper',
+		'version' => '1.0.0',
+		'title' => 'Live Wrapper',
+		'category' => 'widgets',
+		'icon' => 'button',
+		'description' => '',
+		'example' => array(
+			
+		),
+		'supports' => array(
+			'html' => false
+		),
+		'attributes' => array(
+			'content' => array(
+				'type' => 'string',
+				'role' => 'content'
+			)
+		),
+		'allowedBlocks' => array(
+			'core/post-template'
+		),
+		'textdomain' => 'live-wrapper',
+		'editorScript' => 'file:./index.js',
+		'editorStyle' => 'file:./index.css',
+		'style' => 'file:./style-index.css',
+		'viewScript' => 'file:./view.js',
+		'render' => 'file:./index.php'
 	)
 );

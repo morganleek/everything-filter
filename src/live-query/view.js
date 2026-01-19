@@ -296,12 +296,10 @@ const LivePosts = ( { liveMore, liveFilters, filters, postType, limit, moreLabel
 			), liveMore ) }
 			<>
 				{ loading && posts.length === 0 ? (
-					<div className="post-loading">
-						<div className="post-grid">
-							{ [...Array(limit)].map( (_, i) => (
-								<div className={ "post-card loading type-" + postType }></div>
-							))}
-						</div>
+					<div className="post-grid post-loading">
+						{ [...Array(limit)].map( (_, i) => (
+							<div className={ "post-card loading type-" + postType }></div>
+						))}
 					</div>
 				) : posts.length === 0 ? (
 					<div className="post-no-results">
