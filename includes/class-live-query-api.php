@@ -137,6 +137,15 @@ class Project_Filters_API {
             //     'terms' => $industry,
             // );
         }
+        
+        if( $post_type === 'product' ) {
+            $tax_query_params[] = array(
+                'taxonomy' => 'product_visibility',
+                'field'    => 'name',
+                'terms'    => 'exclude-from-catalog',
+                'operator' => 'NOT IN',
+            );
+        }
 
         if (!empty($tax_query_params)) {
             $args['tax_query'] = $tax_query_params;
@@ -144,6 +153,7 @@ class Project_Filters_API {
                 $args['tax_query']['relation'] = 'AND';
             }
         }
+
 
         // Override any arg
         $args = apply_filters( 'live-query-' . $post_type . '-args', $args );
