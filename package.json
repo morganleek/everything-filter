@@ -1,6 +1,6 @@
 {
 	"name": "live-query",
-	"version": "1.0.0",
+	"version": "1.1.0",
 	"description": "Gutenberg live loading Query Block",
 	"author": "Morgan Leek",
 	"license": "GPL-2.0-or-later",
@@ -15,7 +15,7 @@
 		"start": "wp-scripts start --blocks-manifest"
 	},
 	"devDependencies": {
-		"@wordpress/scripts": "^30.27.0"
+		"@wordpress/scripts": "^32.0.0"
 	},
 	"dependencies": {
 		"@atlaskit/icon": "^28.5.3",
