@@ -31,6 +31,8 @@ class LiveQuery {
 		// Register hooks
 		add_action('rest_api_init', array($this, 'register_rest_routes'));
 		add_action('init', array($this, 'create_block_live_query_block_init'));
+		add_action( 'wp_ajax_live_query_nonce', fn() => wp_die( wp_create_nonce( 'wp_rest' ) ) );
+		add_action( 'wp_ajax_nopriv_live_query_nonce', fn() => wp_die( wp_create_nonce( 'wp_rest' ) ) );
 	}
 
 	// Load required dependencies
