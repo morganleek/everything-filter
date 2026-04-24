@@ -10,7 +10,7 @@ Live Query is a Gutenberg block for loading posts via AJAX with dynamic taxonomy
 
 Use the filter `live_query_formatted` to change the appearance of your content.
 ```php
-function live_query_formatted_default( $post_id ) {
+function my_live_query_formatted( $post_id ) {
     // featured image 
     $post_thumbnail = ( has_post_thumbnail( $post_id ) ) ? "<div class=\"post-image\">" . 
         "<a href=\"" . get_permalink( $post_id ) . "\">" . 
