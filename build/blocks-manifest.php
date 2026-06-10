@@ -201,6 +201,10 @@ return array(
 			'limit' => array(
 				'type' => 'integer',
 				'default' => 6
+			),
+			'rootUrl' => array(
+				'type' => 'string',
+				'default' => ''
 			)
 		),
 		'providesContext' => array(

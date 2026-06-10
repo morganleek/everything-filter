@@ -1,7 +1,8 @@
+import apiFetch from '@wordpress/api-fetch';
+
 import domReady from '@wordpress/dom-ready';
 import { createRoot, createPortal } from '@wordpress/element';
 import { useState, useEffect, useRef } from '@wordpress/element';
-import apiFetch from '@wordpress/api-fetch';
 import { addQueryArgs, getQueryArgs } from '@wordpress/url';
 // import Select from 'react-select';
 import classNames from 'classnames'
@@ -22,7 +23,7 @@ const refreshNonce = async () => {
 	}
 };
 
-const LivePosts = ({ liveMore, liveFilters, filters, postType, limit, moreLabel, layout, hideEmpty, initFilters }) => {
+const LivePosts = ({ liveMore, liveFilters, filters, postType, limit, moreLabel, layout, hideEmpty, initFilters, rootUrl }) => {
 	const [posts, setPosts] = useState([]);
 	const [filtersLoaded, setFiltersLoaded] = useState(false);
 	const [filtersWithTerms, setFiltersWithTerms] = useState(null);
@@ -75,9 +76,14 @@ const LivePosts = ({ liveMore, liveFilters, filters, postType, limit, moreLabel,
 			queryParams["hide_empty"] = "1";
 		}
 
-		apiFetch({
-			path: addQueryArgs('/live-query/v1/terms', queryParams)
-		}).then((data) => {
+		fetch( new Request( rootUrl + addQueryArgs('/live-query/v1/terms', queryParams) ) )
+		.then( response => {
+			if ( !response.ok ) {
+				throw new Error(`HTTP error! Status: ${response.status}`);
+			}
+			return response.json();
+		} )
+		.then((data) => {
 			// if( initFilters.length > 0 ) {
 			const tempTaxTerms = data.taxonomyTerms;
 			Object.keys(initFilters).forEach(key => (
@@ -128,21 +134,24 @@ const LivePosts = ({ liveMore, liveFilters, filters, postType, limit, moreLabel,
 				tax_query: taxQuery
 			};
 
-			apiFetch({
-				path: addQueryArgs("live-query/v1/posts", params)
-			}).then((res) => {
+			fetch( new Request( rootUrl + addQueryArgs("/live-query/v1/posts", params) ) )
+			.then( response => {
+				if ( !response.ok ) {
+					throw new Error(`HTTP error! Status: ${response.status}`);
+				}
+				return response.json();
+			} )
+			.then((res) => {
 				setTotalPages(parseInt(res.total_pages));
 				setTotalProjects(parseInt(res.total));
 				setCurrentPage(page);
 				setInitialLoad(false);
 				setPosts(page === 1 ? res.posts : [...posts, ...res.posts]);
 				setLoading(false);
-				// return res.json();
 			});
 		} catch (error) {
 			console.error('Error fetching posts:', error);
 		}
-		// finally {	}
 	};
 
 	const handleLoadMore = () => {
@@ -167,12 +176,6 @@ const LivePosts = ({ liveMore, liveFilters, filters, postType, limit, moreLabel,
 		const url = addQueryArgs(baseURL(), taxQuery);
 		window.history.pushState({}, "Page", url);
 	}
-
-	// const handleReset = () => {
-	// 	setSelectedService( '' );
-	// 	setSelectedIndustry( '' );
-	// 	setCurrentPage( 1 );
-	// };
 
 	const updateSearchTerm = (tax, slug, state) => {
 		setCurrentPage(1);
@@ -203,9 +206,6 @@ const LivePosts = ({ liveMore, liveFilters, filters, postType, limit, moreLabel,
 		const newTaxTerms = {}
 		newTaxTerms[tax] = filtersWithTerms[tax].map(insideTerm => {
 			return { ...insideTerm, selected: 0 }
-			// if( insideTerm.slug === slug ) {
-			// }
-			// return insideTerm;
 		});
 
 		setFiltersWithTerms(
@@ -350,6 +350,11 @@ domReady(() => {
 		// attributes
 		const postType = container.attributes.posttype.value;
 		const limit = parseInt(container.attributes.limit.value);
+		const rootUrl = container.attributes.rooturl.value ? container.attributes.rooturl.value : liveQueryData?.rootUrl;
+
+		// if (rootUrl) {
+		// 	apiFetch.use(apiFetch.createrootUrlMiddleware(rootUrl));
+		// }
 		const filterlabels = liveFilters ? JSON.parse(liveFilters.attributes.filters.value) : undefined;
 		const moreLabel = liveMore ? liveMore.attributes.content.value : "Load more";
 		const layout = liveFilters ? liveFilters.attributes.layout.value : "select";
@@ -384,6 +389,7 @@ domReady(() => {
 			moreLabel={moreLabel}
 			layout={layout}
 			hideEmpty={hideEmpty}
+			rootUrl={rootUrl}
 		// mutliSelect={ mutliSelect }
 		/>);
 	}

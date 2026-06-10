@@ -76,6 +76,10 @@
     "limit": {
       "type": "integer",
       "default": 6
+    },
+    "rootUrl": {
+      "type": "string",
+      "default": ""
     }
   },
   "providesContext": {

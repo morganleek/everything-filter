@@ -60,6 +60,8 @@ class LiveQuery {
 		foreach ( array_keys( $manifest_data ) as $block_type ) {
 			register_block_type( __DIR__ . "/build/{$block_type}" );
 		}
+
+		
 	}
 }
 
@@ -74,3 +76,22 @@ function live_query_flush() {
 }
 register_activation_hook(__FILE__, 'live_query_flush');
 register_deactivation_hook(__FILE__, 'live_query_flush');
+
+// JS Variables 
+function live_query_localize_script() {
+	$handle = 'scm-live-query-view-script'; 
+
+	$data_to_pass = [
+		'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+		'rootUrl' => rtrim( esc_url_raw( rest_url() ), "/" ),
+		'nonce'   => wp_create_nonce( 'wp_rest' )
+	];
+
+	$script_data = sprintf(
+		'const liveQueryData = %s;', 
+		wp_json_encode( $data_to_pass )
+	);
+
+	wp_add_inline_script( $handle, $script_data, 'before' );
+}
+add_action( 'enqueue_block_assets', 'live_query_localize_script' );
