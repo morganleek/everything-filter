@@ -215,30 +215,34 @@ class Project_Filters_API {
         $taxonomies = $request->get_param('taxonomies');
         $hide_empty = $request->get_param('hide_empty') ?: false;
         $taxonomyTerms = array();
+    
 
         if( empty( $taxonomies ) ) {
             return new WP_REST_Response(array('terms' => array()), 200);
         }
 
         foreach( $taxonomies as $t ) {
+            error_log( `::$t`, false );
             $terms = get_terms(array(
                 'taxonomy' => $t,
                 'hide_empty' => $hide_empty,
             ));
     
-            if ( is_wp_error( $terms ) ) {
-                return new WP_REST_Response(array('terms' => array()), 200);
+            if ( !is_wp_error( $terms ) ) {
+                // error_log( print_r( $terms->errors, true ), false );
+                // error_log( `term slug: $t`, false );
+                // return new WP_REST_Response(array('terms' => array()), 200);
+                foreach ( $terms as $term ) {
+                    $taxonomyTerms[$t][] = array(
+                        'id' => $term->term_id,
+                        'name' => $term->name,
+                        'slug' => $term->slug,
+                        'count' => $term->count,
+                        'selected' => 0
+                    );
+                }
             }
             
-            foreach ( $terms as $term ) {
-                $taxonomyTerms[$t][] = array(
-                    'id' => $term->term_id,
-                    'name' => $term->name,
-                    'slug' => $term->slug,
-                    'count' => $term->count,
-                    'selected' => 0
-                );
-            }
         }
 
         return new WP_REST_Response( array( 'taxonomyTerms' => $taxonomyTerms ), 200 );
