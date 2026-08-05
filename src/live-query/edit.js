@@ -17,7 +17,7 @@ const TEMPLATE = [
 ];
 
 export default function Edit( { attributes, setAttributes } ) {
-	const { postType, limit } = attributes;
+	const { postType, limit, rootURL } = attributes;
 	const [ postTypeOptions, setPostTypeOptions ] = useState( null );
 	// const [ taxonomies, setTaxonomies ] = useState( null );
 	// const [ taxonomyOptions, setTaxonomyOptions ] = useState( null );
@@ -64,6 +64,15 @@ export default function Edit( { attributes, setAttributes } ) {
 						label="Post limit"
 						value={ limit }
 						onChange={ ( newLimit ) => setAttributes( { limit: parseInt( newLimit ) } ) }
+					/>
+					<TextControl
+						__nextHasNoMarginBottom
+						__next40pxDefaultSize
+						type="text"
+						label="Root URL"
+						value={ rootURL }
+						onChange={ ( newRootURL ) => setAttributes( { rootURL: newRootURL } ) }
+						help="Use an alternative URL for API requests"
 					/>
 				</PanelBody>
 			</InspectorControls>

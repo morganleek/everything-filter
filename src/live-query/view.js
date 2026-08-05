@@ -33,7 +33,7 @@ const LivePosts = ({ liveMore, liveFilters, filters, postType, limit, moreLabel,
 	const [loading, setLoading] = useState(true);
 	const [initialLoad, setInitialLoad] = useState(true);
 
-	// handle click off 
+	// handle click off
 	const clickDocument = useRef(null);
 
 	// const apiUrl = window.projectFiltersData.apiUrl;
@@ -350,6 +350,10 @@ domReady(() => {
 		// attributes
 		const postType = container.attributes.posttype.value;
 		const limit = parseInt(container.attributes.limit.value);
+		const rootURL = container.attributes.rooturl.value;
+		if (rootURL) {
+			apiFetch.use(apiFetch.createRootURLMiddleware(rootURL.replace(/\/?$/, '/')));
+		}
 		const filterlabels = liveFilters ? JSON.parse(liveFilters.attributes.filters.value) : undefined;
 		const moreLabel = liveMore ? liveMore.attributes.content.value : "Load more";
 		const layout = liveFilters ? liveFilters.attributes.layout.value : "select";

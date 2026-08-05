@@ -70,6 +70,10 @@
     "limit": {
 			"type": "integer",
 			"default": 6
+		},
+		"rootURL": {
+			"type": "string",
+			"default": ""
 		}
   },
   "providesContext": {
