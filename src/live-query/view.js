@@ -23,7 +23,7 @@ const refreshNonce = async () => {
 	}
 };
 
-const LivePosts = ({ liveMore, liveFilters, filters, postType, limit, moreLabel, layout, hideEmpty, initFilters, additionalParams = {} }) => {
+const LivePosts = ({ liveMore, liveFilters, filters, postType, limit, moreLabel, layout, hideEmpty, initFilters, additionalParams = {}, rootUrl }) => {
 	const [posts, setPosts] = useState([]);
 	const [filtersLoaded, setFiltersLoaded] = useState(false);
 	const [filtersWithTerms, setFiltersWithTerms] = useState(null);
@@ -76,9 +76,14 @@ const LivePosts = ({ liveMore, liveFilters, filters, postType, limit, moreLabel,
 			queryParams["hide_empty"] = "1";
 		}
 
-		apiFetch({
-			path: addQueryArgs('/live-query/v1/terms', queryParams)
-		}).then((data) => {
+		fetch( new Request( rootUrl + addQueryArgs('/live-query/v1/terms', queryParams) ) )
+		.then( response => {
+			if ( !response.ok ) {
+				throw new Error(`HTTP error! Status: ${response.status}`);
+			}
+			return response.json();
+		} )
+		.then((data) => {
 			// if( initFilters.length > 0 ) {
 			const tempTaxTerms = data.taxonomyTerms;
 			Object.keys(initFilters).forEach(key => (
@@ -130,9 +135,14 @@ const LivePosts = ({ liveMore, liveFilters, filters, postType, limit, moreLabel,
 				tax_query: taxQuery
 			};
 
-			apiFetch({
-				path: addQueryArgs("live-query/v1/posts", params)
-			}).then((res) => {
+			fetch( new Request( rootUrl + addQueryArgs("/live-query/v1/posts", params) ) )
+			.then( response => {
+				if ( !response.ok ) {
+					throw new Error(`HTTP error! Status: ${response.status}`);
+				}
+				return response.json();
+			} )
+			.then((res) => {
 				setTotalPages(parseInt(res.total_pages));
 				setTotalProjects(parseInt(res.total));
 				setCurrentPage(page);
@@ -341,10 +351,8 @@ domReady(() => {
 		// attributes
 		const postType = container.attributes.posttype.value;
 		const limit = parseInt(container.attributes.limit.value);
-		const rootURL = container.attributes.rooturl.value || window.liveQueryData?.rootUrl;
-		if (rootURL) {
-			apiFetch.use(apiFetch.createRootURLMiddleware(rootURL.replace(/\/?$/, '/')));
-		}
+		const rootUrl = container.attributes.rooturl.value ? container.attributes.rooturl.value : liveQueryData?.rootUrl;
+
 		let additionalParams = {};
 		if (container.attributes.params?.value) {
 			try {
@@ -386,6 +394,7 @@ domReady(() => {
 			moreLabel={moreLabel}
 			layout={layout}
 			hideEmpty={hideEmpty}
+			rootUrl={rootUrl}
 			additionalParams={additionalParams}
 		// mutliSelect={ mutliSelect }
 		/>);
