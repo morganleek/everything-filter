@@ -81,9 +81,9 @@ export default function Edit( { attributes, setAttributes } ) {
 						__next40pxDefaultSize
 						type="text"
 						label="Root URL"
+						help={ __( 'Optional. Overrides the REST API root URL used by this block on the frontend.' ) }
 						value={ rootURL }
 						onChange={ ( newRootURL ) => setAttributes( { rootURL: newRootURL } ) }
-						help="Use an alternative URL for API requests"
 					/>
 					<TextareaControl
 						__nextHasNoMarginBottom

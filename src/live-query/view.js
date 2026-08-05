@@ -1,7 +1,8 @@
+import apiFetch from '@wordpress/api-fetch';
+
 import domReady from '@wordpress/dom-ready';
 import { createRoot, createPortal } from '@wordpress/element';
 import { useState, useEffect, useRef } from '@wordpress/element';
-import apiFetch from '@wordpress/api-fetch';
 import { addQueryArgs, getQueryArgs } from '@wordpress/url';
 // import Select from 'react-select';
 import classNames from 'classnames'
@@ -138,12 +139,10 @@ const LivePosts = ({ liveMore, liveFilters, filters, postType, limit, moreLabel,
 				setInitialLoad(false);
 				setPosts(page === 1 ? res.posts : [...posts, ...res.posts]);
 				setLoading(false);
-				// return res.json();
 			});
 		} catch (error) {
 			console.error('Error fetching posts:', error);
 		}
-		// finally {	}
 	};
 
 	const handleLoadMore = () => {
@@ -168,12 +167,6 @@ const LivePosts = ({ liveMore, liveFilters, filters, postType, limit, moreLabel,
 		const url = addQueryArgs(baseURL(), taxQuery);
 		window.history.pushState({}, "Page", url);
 	}
-
-	// const handleReset = () => {
-	// 	setSelectedService( '' );
-	// 	setSelectedIndustry( '' );
-	// 	setCurrentPage( 1 );
-	// };
 
 	const updateSearchTerm = (tax, slug, state) => {
 		setCurrentPage(1);
@@ -204,9 +197,6 @@ const LivePosts = ({ liveMore, liveFilters, filters, postType, limit, moreLabel,
 		const newTaxTerms = {}
 		newTaxTerms[tax] = filtersWithTerms[tax].map(insideTerm => {
 			return { ...insideTerm, selected: 0 }
-			// if( insideTerm.slug === slug ) {
-			// }
-			// return insideTerm;
 		});
 
 		setFiltersWithTerms(
@@ -351,14 +341,13 @@ domReady(() => {
 		// attributes
 		const postType = container.attributes.posttype.value;
 		const limit = parseInt(container.attributes.limit.value);
-		const rootURL = container.attributes.rooturl.value;
+		const rootURL = container.attributes.rooturl.value || window.liveQueryData?.rootUrl;
 		if (rootURL) {
 			apiFetch.use(apiFetch.createRootURLMiddleware(rootURL.replace(/\/?$/, '/')));
 		}
 		let additionalParams = {};
 		if (container.attributes.params?.value) {
 			try {
-				console.log( container.attributes.params.value );
 				additionalParams = JSON.parse(container.attributes.params.value);
 			} catch (e) {
 				console.error('Live Query: invalid additional params JSON', e);
@@ -383,7 +372,6 @@ domReady(() => {
 		}
 		// const initService = args.service ? args.service : '';
 		// const initIndustry = args.industry ? args.industry : '';
-		console.log( additionalParams );
 
 		const root = createRoot(
 			livePosts
