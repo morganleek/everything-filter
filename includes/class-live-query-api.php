@@ -36,7 +36,9 @@ class Project_Filters_API {
                     'default' => '',
                     'sanitize_callback' => 'sanitize_text_field',
                 ),
-
+                'date_query' => array(
+                    'default' => ''
+                )
                 // 'industry' => array(
                 //     'default' => '',
                 //     'sanitize_callback' => 'sanitize_text_field',
@@ -87,6 +89,7 @@ class Project_Filters_API {
         $exclude = $request->get_param('exclude');
         $post_type = $request->get_param('post_type');
         $tax_query = $request->get_param('tax_query');
+        $date_query = $request->get_param('date_query') ?: [];
 
         if( empty( $post_type ) ) {
             return new WP_REST_Response(array(
@@ -108,6 +111,7 @@ class Project_Filters_API {
             'post_status' => 'publish',
             'orderby' => $orderby,
             'order' => $order,
+            'date_query' => $date_query,
         );
 
         // Check if there is a post to exclude

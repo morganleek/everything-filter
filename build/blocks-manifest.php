@@ -205,6 +205,10 @@ return array(
 			'rootURL' => array(
 				'type' => 'string',
 				'default' => ''
+			),
+			'params' => array(
+				'type' => 'string',
+				'default' => '{}'
 			)
 		),
 		'providesContext' => array(

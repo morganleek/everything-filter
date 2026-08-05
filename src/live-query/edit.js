@@ -1,6 +1,6 @@
 import { __ } from '@wordpress/i18n';
 import { InspectorControls, useBlockProps } from '@wordpress/block-editor';
-import { PanelBody, RadioControl, TextControl, SelectControl, CheckboxControl } from '@wordpress/components';
+import { PanelBody, RadioControl, TextControl, SelectControl, CheckboxControl, TextareaControl } from '@wordpress/components';
 import apiFetch from '@wordpress/api-fetch';
 import './editor.scss';
 import { useEffect, useState } from '@wordpress/element';
@@ -17,8 +17,9 @@ const TEMPLATE = [
 ];
 
 export default function Edit( { attributes, setAttributes } ) {
-	const { postType, limit, rootURL } = attributes;
+	const { postType, limit, rootURL, params } = attributes;
 	const [ postTypeOptions, setPostTypeOptions ] = useState( null );
+	const [ paramsError, setParamsError ] = useState( '' );
 	// const [ taxonomies, setTaxonomies ] = useState( null );
 	// const [ taxonomyOptions, setTaxonomyOptions ] = useState( null );
 	// const [ postTypes, setPostTypes ] = useState( null );
@@ -41,6 +42,16 @@ export default function Edit( { attributes, setAttributes } ) {
 			
 	const updatePostType = ( newType ) => {
 		setAttributes( { postType: newType } );
+	}
+
+	const updateParams = ( newParams ) => {
+		setAttributes( { params: newParams } );
+		try {
+			JSON.parse( newParams || '{}' );
+			setParamsError( '' );
+		} catch ( e ) {
+			setParamsError( __( 'Invalid JSON' ) );
+		}
 	}
 
 	return (
@@ -73,6 +84,14 @@ export default function Edit( { attributes, setAttributes } ) {
 						value={ rootURL }
 						onChange={ ( newRootURL ) => setAttributes( { rootURL: newRootURL } ) }
 						help="Use an alternative URL for API requests"
+					/>
+					<TextareaControl
+						__nextHasNoMarginBottom
+						label="Additional params"
+						value={ params }
+						onChange={ updateParams }
+						help={ paramsError || 'JSON object of additional params to send with API requests' }
+						rows={ 4 }
 					/>
 				</PanelBody>
 			</InspectorControls>

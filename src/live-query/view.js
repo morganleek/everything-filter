@@ -22,7 +22,7 @@ const refreshNonce = async () => {
 	}
 };
 
-const LivePosts = ({ liveMore, liveFilters, filters, postType, limit, moreLabel, layout, hideEmpty, initFilters }) => {
+const LivePosts = ({ liveMore, liveFilters, filters, postType, limit, moreLabel, layout, hideEmpty, initFilters, additionalParams = {} }) => {
 	const [posts, setPosts] = useState([]);
 	const [filtersLoaded, setFiltersLoaded] = useState(false);
 	const [filtersWithTerms, setFiltersWithTerms] = useState(null);
@@ -66,7 +66,7 @@ const LivePosts = ({ liveMore, liveFilters, filters, postType, limit, moreLabel,
 
 	const fetchTaxonomies = async () => {
 		await refreshNonce();
-		let queryParams = {};
+		let queryParams = { ...additionalParams };
 
 		if (filters) {
 			queryParams.taxonomies = Object.keys(filters);
@@ -121,6 +121,7 @@ const LivePosts = ({ liveMore, liveFilters, filters, postType, limit, moreLabel,
 			}
 
 			const params = {
+				...additionalParams,
 				page: page,
 				per_page: perPage,
 				post_type: postType,
@@ -354,6 +355,15 @@ domReady(() => {
 		if (rootURL) {
 			apiFetch.use(apiFetch.createRootURLMiddleware(rootURL.replace(/\/?$/, '/')));
 		}
+		let additionalParams = {};
+		if (container.attributes.params?.value) {
+			try {
+				console.log( container.attributes.params.value );
+				additionalParams = JSON.parse(container.attributes.params.value);
+			} catch (e) {
+				console.error('Live Query: invalid additional params JSON', e);
+			}
+		}
 		const filterlabels = liveFilters ? JSON.parse(liveFilters.attributes.filters.value) : undefined;
 		const moreLabel = liveMore ? liveMore.attributes.content.value : "Load more";
 		const layout = liveFilters ? liveFilters.attributes.layout.value : "select";
@@ -373,7 +383,7 @@ domReady(() => {
 		}
 		// const initService = args.service ? args.service : '';
 		// const initIndustry = args.industry ? args.industry : '';
-
+		console.log( additionalParams );
 
 		const root = createRoot(
 			livePosts
@@ -388,6 +398,7 @@ domReady(() => {
 			moreLabel={moreLabel}
 			layout={layout}
 			hideEmpty={hideEmpty}
+			additionalParams={additionalParams}
 		// mutliSelect={ mutliSelect }
 		/>);
 	}

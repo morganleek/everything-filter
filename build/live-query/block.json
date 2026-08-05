@@ -80,6 +80,10 @@
     "rootURL": {
       "type": "string",
       "default": ""
+    },
+    "params": {
+      "type": "string",
+      "default": "{}"
     }
   },
   "providesContext": {
