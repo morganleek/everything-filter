@@ -209,6 +209,10 @@ return array(
 			'params' => array(
 				'type' => 'string',
 				'default' => '{}'
+			),
+			'taxQuery' => array(
+				'type' => 'string',
+				'default' => '{}'
 			)
 		),
 		'providesContext' => array(

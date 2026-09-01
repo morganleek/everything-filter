@@ -1,7 +1,8 @@
 import { __ } from '@wordpress/i18n';
 import { InspectorControls, useBlockProps } from '@wordpress/block-editor';
-import { PanelBody, RadioControl, TextControl, SelectControl, CheckboxControl, TextareaControl } from '@wordpress/components';
+import { PanelBody, RadioControl, TextControl, SelectControl, CheckboxControl, TextareaControl, Spinner } from '@wordpress/components';
 import apiFetch from '@wordpress/api-fetch';
+import { addQueryArgs } from '@wordpress/url';
 import './editor.scss';
 import { useEffect, useState } from '@wordpress/element';
 import { InnerBlocks } from '@wordpress/block-editor';
@@ -17,12 +18,19 @@ const TEMPLATE = [
 ];
 
 export default function Edit( { attributes, setAttributes } ) {
-	const { postType, limit, rootURL, params } = attributes;
+	const { postType, limit, rootURL, params, taxQuery } = attributes;
 	const [ postTypeOptions, setPostTypeOptions ] = useState( null );
 	const [ paramsError, setParamsError ] = useState( '' );
-	// const [ taxonomies, setTaxonomies ] = useState( null );
-	// const [ taxonomyOptions, setTaxonomyOptions ] = useState( null );
-	// const [ postTypes, setPostTypes ] = useState( null );
+	const [ taxonomies, setTaxonomies ] = useState( null );
+	const [ taxonomyTerms, setTaxonomyTerms ] = useState( {} );
+	const [ loadingTerms, setLoadingTerms ] = useState( {} );
+
+	let taxQueryObj = {};
+	try {
+		taxQueryObj = JSON.parse( taxQuery || '{}' );
+	} catch ( e ) {
+		taxQueryObj = {};
+	}
 
 	useEffect( () => {
 		apiFetch( { path: '/wp/v2/types' } ).then( ( types ) => {
@@ -38,8 +46,11 @@ export default function Edit( { attributes, setAttributes } ) {
 				setPostTypeOptions( typesSelect );
 			}
 		} );
+		apiFetch( { path: '/wp/v2/taxonomies' } ).then( ( data ) => {
+			setTaxonomies( data );
+		} );
 	}, [] );
-			
+
 	const updatePostType = ( newType ) => {
 		setAttributes( { postType: newType } );
 	}
@@ -52,6 +63,39 @@ export default function Edit( { attributes, setAttributes } ) {
 		} catch ( e ) {
 			setParamsError( __( 'Invalid JSON' ) );
 		}
+	}
+
+	const fetchTermsForTaxonomy = ( taxSlug ) => {
+		setLoadingTerms( ( prev ) => ( { ...prev, [ taxSlug ]: true } ) );
+		apiFetch( { path: addQueryArgs( '/live-query/v1/terms', { taxonomies: [ taxSlug ] } ) } )
+			.then( ( data ) => {
+				setTaxonomyTerms( ( prev ) => ( { ...prev, [ taxSlug ]: data.taxonomyTerms?.[ taxSlug ] || [] } ) );
+				setLoadingTerms( ( prev ) => ( { ...prev, [ taxSlug ]: false } ) );
+			} );
+	}
+
+	const toggleStaticTaxonomy = ( taxSlug, checked ) => {
+		const newTaxQuery = { ...taxQueryObj };
+		if( checked ) {
+			newTaxQuery[ taxSlug ] = [];
+			if( !taxonomyTerms[ taxSlug ] ) {
+				fetchTermsForTaxonomy( taxSlug );
+			}
+		} else {
+			delete newTaxQuery[ taxSlug ];
+		}
+		setAttributes( { taxQuery: JSON.stringify( newTaxQuery ) } );
+	}
+
+	const toggleStaticTerm = ( taxSlug, termSlug, checked ) => {
+		const currentTerms = new Set( taxQueryObj[ taxSlug ] || [] );
+		if( checked ) {
+			currentTerms.add( termSlug );
+		} else {
+			currentTerms.delete( termSlug );
+		}
+		const newTaxQuery = { ...taxQueryObj, [ taxSlug ]: Array.from( currentTerms ) };
+		setAttributes( { taxQuery: JSON.stringify( newTaxQuery ) } );
 	}
 
 	return (
@@ -94,6 +138,37 @@ export default function Edit( { attributes, setAttributes } ) {
 						rows={ 4 }
 					/>
 				</PanelBody>
+				{ taxonomies && (
+					<PanelBody title={ __( 'Static Taxonomy Filter' ) } initialOpen={ false }>
+						<p>{ __( 'Always restrict results to the selected terms. Unlike Live Filters, this cannot be changed by site visitors.' ) }</p>
+						{ Object.keys( taxonomies )
+							.filter( slug => !taxonomies[ slug ].types?.length || taxonomies[ slug ].types.includes( postType ) )
+							.map( slug => (
+								<div className="live-query-static-tax" key={ slug }>
+									<CheckboxControl
+										__nextHasNoMarginBottom
+										label={ taxonomies[ slug ].name }
+										checked={ taxQueryObj.hasOwnProperty( slug ) }
+										onChange={ ( checked ) => toggleStaticTaxonomy( slug, checked ) }
+									/>
+									{ taxQueryObj.hasOwnProperty( slug ) && (
+										<div className="live-query-static-tax-terms">
+											{ loadingTerms[ slug ] && <Spinner /> }
+											{ taxonomyTerms[ slug ] && taxonomyTerms[ slug ].map( term => (
+												<CheckboxControl
+													__nextHasNoMarginBottom
+													key={ term.slug }
+													label={ term.name }
+													checked={ ( taxQueryObj[ slug ] || [] ).includes( term.slug ) }
+													onChange={ ( checked ) => toggleStaticTerm( slug, term.slug, checked ) }
+												/>
+											) ) }
+										</div>
+									) }
+								</div>
+							) ) }
+					</PanelBody>
+				) }
 			</InspectorControls>
 			<InnerBlocks template={ TEMPLATE } />
 		</div>

@@ -78,6 +78,10 @@
 		"params": {
 			"type": "string",
 			"default": "{}"
+		},
+		"taxQuery": {
+			"type": "string",
+			"default": "{}"
 		}
   },
   "providesContext": {

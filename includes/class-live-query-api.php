@@ -32,6 +32,9 @@ class Project_Filters_API {
                     'default' => '',
                     // 'sanitize_callback' => 'rest_sanitize_array'
                 ),
+                'static_tax_query' => array(
+                    'default' => '',
+                ),
                 'post_type' => array(
                     'default' => '',
                     'sanitize_callback' => 'sanitize_text_field',
@@ -89,6 +92,7 @@ class Project_Filters_API {
         $exclude = $request->get_param('exclude');
         $post_type = $request->get_param('post_type');
         $tax_query = $request->get_param('tax_query');
+        $static_tax_query = $request->get_param('static_tax_query');
         $date_query = $request->get_param('date_query') ?: [];
 
         if( empty( $post_type ) ) {
@@ -126,6 +130,24 @@ class Project_Filters_API {
 
         if (!empty($tax_query)) {
             foreach( $tax_query as $k => $v ) {
+                if( empty( $v ) ) {
+                    continue;
+                }
+                $tax_query_params[] = array(
+                    'taxonomy' => $k,
+                    'field' => 'slug',
+                    'terms' => $v,
+                );
+            }
+        }
+
+        // Static taxonomy filter set in the block editor; always applied
+        // and independent of the visitor-toggled tax_query above.
+        if (!empty($static_tax_query)) {
+            foreach( $static_tax_query as $k => $v ) {
+                if( empty( $v ) ) {
+                    continue;
+                }
                 $tax_query_params[] = array(
                     'taxonomy' => $k,
                     'field' => 'slug',

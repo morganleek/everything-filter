@@ -23,7 +23,7 @@ const refreshNonce = async () => {
 	}
 };
 
-const LivePosts = ({ liveMore, liveFilters, filters, postType, limit, moreLabel, layout, hideEmpty, initFilters, additionalParams = {}, rootUrl }) => {
+const LivePosts = ({ liveMore, liveFilters, filters, postType, limit, moreLabel, layout, hideEmpty, initFilters, additionalParams = {}, staticTaxQuery = {}, rootUrl }) => {
 	const [posts, setPosts] = useState([]);
 	const [filtersLoaded, setFiltersLoaded] = useState(false);
 	const [filtersWithTerms, setFiltersWithTerms] = useState(null);
@@ -107,6 +107,7 @@ const LivePosts = ({ liveMore, liveFilters, filters, postType, limit, moreLabel,
 
 	const fetchPosts = async (page = 1, append = false) => {
 		await refreshNonce();
+		// let queryParams = { ...additionalParams };
 		setLoading(true);
 
 		const exclude = document.body.classList.contains('single')
@@ -132,8 +133,11 @@ const LivePosts = ({ liveMore, liveFilters, filters, postType, limit, moreLabel,
 				per_page: perPage,
 				post_type: postType,
 				...(exclude && postId && { exclude: postId[1] }),
-				tax_query: taxQuery
+				tax_query: taxQuery,
+				static_tax_query: staticTaxQuery
 			};
+			console.log( params );
+			
 
 			fetch( new Request( rootUrl + addQueryArgs("/live-query/v1/posts", params) ) )
 			.then( response => {
@@ -361,6 +365,15 @@ domReady(() => {
 				console.error('Live Query: invalid additional params JSON', e);
 			}
 		}
+
+		let staticTaxQuery = {};
+		if (container.attributes.taxquery?.value) {
+			try {
+				staticTaxQuery = JSON.parse(container.attributes.taxquery.value);
+			} catch (e) {
+				console.error('Live Query: invalid static taxonomy filter JSON', e);
+			}
+		}
 		const filterlabels = liveFilters ? JSON.parse(liveFilters.attributes.filters.value) : undefined;
 		const moreLabel = liveMore ? liveMore.attributes.content.value : "Load more";
 		const layout = liveFilters ? liveFilters.attributes.layout.value : "select";
@@ -396,6 +409,7 @@ domReady(() => {
 			hideEmpty={hideEmpty}
 			rootUrl={rootUrl}
 			additionalParams={additionalParams}
+			staticTaxQuery={staticTaxQuery}
 		// mutliSelect={ mutliSelect }
 		/>);
 	}
