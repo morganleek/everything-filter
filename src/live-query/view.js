@@ -11,6 +11,8 @@ import classNames from 'classnames'
 const nonceMiddleware = apiFetch.createNonceMiddleware(window.wpApiSettings?.nonce ?? '');
 apiFetch.use(nonceMiddleware);
 
+const stripHtml = (html) => (html || '').replace(/<[^>]+>/g, '');
+
 const refreshNonce = async () => {
 	const res = await window.fetch('/wp-admin/admin-ajax.php', {
 		method: 'POST',
@@ -28,6 +30,7 @@ const LivePosts = ({ liveMore, liveFilters, filters, postType, limit, moreLabel,
 	const [filtersLoaded, setFiltersLoaded] = useState(false);
 	const [filtersWithTerms, setFiltersWithTerms] = useState(null);
 	const [expandedFilters, setExpandedFilters] = useState({});
+	const [searchQueries, setSearchQueries] = useState({});
 	const [currentPage, setCurrentPage] = useState(1);
 	const [totalPages, setTotalPages] = useState(1);
 	const [totalProjects, setTotalProjects] = useState(0);
@@ -250,55 +253,98 @@ const LivePosts = ({ liveMore, liveFilters, filters, postType, limit, moreLabel,
 									{!initialLoad && (
 										<span className="posts-results">Showing {posts.length} posts in</span>
 									)}
-									{Object.keys(filtersWithTerms).map(tax => (
-										<div
-											className={classNames(`filter-${layout}`, [`filter-${layout}-${tax}`], { "filter-expanded": expandedFilters[tax] })}
-										>
-											<button
-												className="filter-label"
-												onClick={() => {
-													if (layout === "select") {
-														setExpandedFilters({ ...{ [tax]: !expandedFilters[tax] } })
-													}
-													else {
-														clearSearchTerm(tax)
-													}
-												}}
+									{Object.keys(filtersWithTerms).map(tax => {
+										const selectedTerms = filtersWithTerms[tax].filter(term => term.selected === 1);
+										const searchQuery = searchQueries[tax] || '';
+										const matchingTerms = filtersWithTerms[tax].filter(term => (
+											term.selected !== 1 && stripHtml(term.name).toLowerCase().includes(searchQuery.toLowerCase())
+										));
+
+										return (
+											<div
+												key={tax}
+												className={classNames(`filter-${layout}`, [`filter-${layout}-${tax}`], { "filter-expanded": expandedFilters[tax] })}
 											>
-												{filters[tax] ? filters[tax] : "Select an option"}
-											</button>
-											{expandedFilters[tax] === true && layout === "select" && (
-												<div className="dropdown">
-													{filtersWithTerms[tax].map(term => (
-														<label>
-															<span className="checkbox-wrapper">
+												{layout === "select" ? (
+													<>
+														<span className="filter-label">{filters[tax] ? filters[tax] : "Select an option"}</span>
+														<div
+															className="chip-input"
+															onClick={() => setExpandedFilters({ [tax]: true })}
+														>
+															<div className="chip-list">
+																{selectedTerms.map(term => (
+																	<span className="chip" key={term.slug}>
+																		<span dangerouslySetInnerHTML={{ __html: term.name }} />
+																		<button
+																			type="button"
+																			className="chip-remove"
+																			aria-label={`Remove ${stripHtml(term.name)}`}
+																			onClick={(e) => {
+																				e.stopPropagation();
+																				updateSearchTerm(tax, term.slug, false);
+																			}}
+																		>
+																			&times;
+																		</button>
+																	</span>
+																))}
 																<input
-																	type="checkbox"
-																	onChange={() => updateSearchTerm(tax, term.slug, !term.selected)}
-																	checked={term.selected === 1}
-																	value="1"
+																	type="text"
+																	className="chip-search"
+																	placeholder={selectedTerms.length === 0 ? "Search..." : ""}
+																	value={searchQuery}
+																	onFocus={() => setExpandedFilters({ [tax]: true })}
+																	onChange={(e) => setSearchQueries({ ...searchQueries, [tax]: e.target.value })}
 																/>
-															</span>
-															<span dangerouslySetInnerHTML={{ __html: term.name }} /></label>
-													))}
-												</div>
-											)}
-											{layout === "list" && (
-												filtersWithTerms[tax].map(term => (
-													<label>
-														<span className="checkbox-wrapper">
-															<input
-																type="checkbox"
-																onChange={() => updateSearchTerm(tax, term.slug, !term.selected)}
-																checked={term.selected === 1}
-																value="1"
-															/>
-														</span>
-														{term.name}</label>
-												))
-											)}
-										</div>
-									))}
+															</div>
+														</div>
+														{expandedFilters[tax] === true && (
+															<div className="dropdown">
+																{matchingTerms.length === 0 ? (
+																	<div className="dropdown-empty">No matches found</div>
+																) : (
+																	matchingTerms.map(term => (
+																		<button
+																			type="button"
+																			key={term.slug}
+																			className="dropdown-option"
+																			onClick={() => {
+																				updateSearchTerm(tax, term.slug, true);
+																				setSearchQueries({ ...searchQueries, [tax]: '' });
+																			}}
+																			dangerouslySetInnerHTML={{ __html: term.name }}
+																		/>
+																	))
+																)}
+															</div>
+														)}
+													</>
+												) : (
+													<>
+														<button
+															className="filter-label"
+															onClick={() => clearSearchTerm(tax)}
+														>
+															{filters[tax] ? filters[tax] : "Select an option"}
+														</button>
+														{filtersWithTerms[tax].map(term => (
+															<label key={term.slug}>
+																<span className="checkbox-wrapper">
+																	<input
+																		type="checkbox"
+																		onChange={() => updateSearchTerm(tax, term.slug, !term.selected)}
+																		checked={term.selected === 1}
+																		value="1"
+																	/>
+																</span>
+																{term.name}</label>
+														))}
+													</>
+												)}
+											</div>
+										);
+									})}
 								</div>
 							</div>
 						)}

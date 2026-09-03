@@ -51,6 +51,15 @@ export default function Edit( { attributes, setAttributes } ) {
 		} );
 	}, [] );
 
+	// Ensure terms are loaded for any taxonomy already selected, including on initial load.
+	useEffect( () => {
+		Object.keys( taxQueryObj ).forEach( ( slug ) => {
+			if( !taxonomyTerms[ slug ] && !loadingTerms[ slug ] ) {
+				fetchTermsForTaxonomy( slug );
+			}
+		} );
+	}, [ taxQuery ] );
+
 	const updatePostType = ( newType ) => {
 		setAttributes( { postType: newType } );
 	}
@@ -78,9 +87,6 @@ export default function Edit( { attributes, setAttributes } ) {
 		const newTaxQuery = { ...taxQueryObj };
 		if( checked ) {
 			newTaxQuery[ taxSlug ] = [];
-			if( !taxonomyTerms[ taxSlug ] ) {
-				fetchTermsForTaxonomy( taxSlug );
-			}
 		} else {
 			delete newTaxQuery[ taxSlug ];
 		}
@@ -97,6 +103,8 @@ export default function Edit( { attributes, setAttributes } ) {
 		const newTaxQuery = { ...taxQueryObj, [ taxSlug ]: Array.from( currentTerms ) };
 		setAttributes( { taxQuery: JSON.stringify( newTaxQuery ) } );
 	}
+
+	console.log( taxQueryObj );
 
 	return (
 		<div { ...useBlockProps() }>
@@ -139,34 +147,37 @@ export default function Edit( { attributes, setAttributes } ) {
 					/>
 				</PanelBody>
 				{ taxonomies && (
-					<PanelBody title={ __( 'Static Taxonomy Filter' ) } initialOpen={ false }>
-						<p>{ __( 'Always restrict results to the selected terms. Unlike Live Filters, this cannot be changed by site visitors.' ) }</p>
-						{ Object.keys( taxonomies )
-							.filter( slug => !taxonomies[ slug ].types?.length || taxonomies[ slug ].types.includes( postType ) )
-							.map( slug => (
-								<div className="live-query-static-tax" key={ slug }>
-									<CheckboxControl
-										__nextHasNoMarginBottom
-										label={ taxonomies[ slug ].name }
-										checked={ taxQueryObj.hasOwnProperty( slug ) }
-										onChange={ ( checked ) => toggleStaticTaxonomy( slug, checked ) }
-									/>
-									{ taxQueryObj.hasOwnProperty( slug ) && (
-										<div className="live-query-static-tax-terms">
-											{ loadingTerms[ slug ] && <Spinner /> }
-											{ taxonomyTerms[ slug ] && taxonomyTerms[ slug ].map( term => (
-												<CheckboxControl
-													__nextHasNoMarginBottom
-													key={ term.slug }
-													label={ term.name }
-													checked={ ( taxQueryObj[ slug ] || [] ).includes( term.slug ) }
-													onChange={ ( checked ) => toggleStaticTerm( slug, term.slug, checked ) }
-												/>
-											) ) }
-										</div>
-									) }
-								</div>
-							) ) }
+					<PanelBody title={ __( 'Filters' ) } initialOpen={ Object.keys( taxQueryObj ).length > 0 }>
+						<p>{ __( 'Always restrict results by the selected terms' ) }</p>
+						<div className="live-query-static-tax-wrapper">
+							{ Object.keys( taxonomies )
+								.filter( slug => !taxonomies[ slug ].types?.length || taxonomies[ slug ].types.includes( postType ) )
+								.map( slug => (
+									<div className="live-query-static-tax" key={ slug }>
+										<CheckboxControl
+											// __nextHasNoMarginBottom
+											label={ taxonomies[ slug ].name }
+											checked={ taxQueryObj.hasOwnProperty( slug ) }
+											onChange={ ( checked ) => toggleStaticTaxonomy( slug, checked ) }
+										/>
+										{ taxQueryObj.hasOwnProperty( slug ) && (
+											<div className="live-query-static-tax-terms">
+												{ loadingTerms[ slug ] && <Spinner /> }
+												{ taxonomyTerms[ slug ] && taxonomyTerms[ slug ].map( term => (
+													<CheckboxControl
+														// __nextHasNoMarginBottom
+														key={ term.slug }
+														label={ term.name }
+														checked={ ( taxQueryObj[ slug ] || [] ).includes( term.slug ) }
+														onChange={ ( checked ) => toggleStaticTerm( slug, term.slug, checked ) }
+													/>
+												) ) }
+											</div>
+										) }
+									</div>
+								) ) }
+						</div>
+
 					</PanelBody>
 				) }
 			</InspectorControls>
